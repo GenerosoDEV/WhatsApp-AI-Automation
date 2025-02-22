@@ -34,25 +34,29 @@ client.on('message_create', async (message) => {
     if (message.from === "status@broadcast") { return }
     if (!["text", "chat", "audio", "ptt", "voice", "image", "video", "document", "sticker"].includes(message.type)) { return }
 
+    const INSTRUCTIONS = JSON.parse(fs.readFileSync('instructions.json', 'utf8'))['instruction']
+
     if (message.fromMe) {
         let body = {
             model: "gpt-4o",
             messages: [
-                { role: "system", content: "Você se chama Flávio e é um desenvolvedor full-stack de 18 anos. Responda as mensagens do WhatsApp (que você irá receber) de forma descontraída" },
+                { role: "system", content: INSTRUCTIONS },
             ]
         }
 
-        fs.readFile('conversationsBodys.json', 'utf8', (err, data) => {
-            let jsonData = JSON.parse(data);
-            if (!jsonData[message.to]) {
-                jsonData[message.to] = body
-            }
+        const data = fs.readFileSync('conversationsBodys.json', 'utf8');
+        let jsonData = JSON.parse(data);
 
-            jsonData[message.to].messages.push({ role: "assistant", content: message.body })
+        if (!jsonData[message.to]) {
+            jsonData[message.to] = body
+        }
 
-            body = jsonData[message.to]
-            fs.writeFile('conversationsBodys.json', JSON.stringify(jsonData, null, 2), 'utf8', (err) => { });
-        })
+        jsonData[message.to].messages.push({ role: "assistant", content: message.body });
+
+        body = jsonData[message.from];
+
+        fs.writeFileSync('conversationsBodys.json', JSON.stringify(jsonData, null, 2), 'utf8');
+
         return
     }
 
@@ -70,7 +74,7 @@ client.on('message_create', async (message) => {
         let body = {
             model: "gpt-4o",
             messages: [
-                { role: "system", content: "Você se chama Flávio e é um desenvolvedor full-stack de 18 anos. Responda as mensagens do WhatsApp (que você irá receber) de forma descontraída" },
+                { role: "system", content: INSTRUCTIONS },
             ]
         }
 
